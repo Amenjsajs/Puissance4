@@ -123,7 +123,9 @@ public class PS4Fen extends JFrame{
                         }
 
                         int indiceImg = Utils.getRandomIntInclusive(1,11);
-                        labFeuArtifice.setIcon(new ImageIcon(CHEMIN_IMAGE+indiceImg+".gif"));
+                        ImageIcon iconFeuArtifice = Utils.getAppIcon("feu-d-artifice-"+indiceImg+".gif");
+                        System.out.println(iconFeuArtifice);
+                        labFeuArtifice.setIcon(iconFeuArtifice);
                         panFeuArtifice.setVisible(true);
 
                         //On affiche le message de victoire et on demande si le jeu continue
@@ -178,5 +180,4 @@ public class PS4Fen extends JFrame{
     private RecupNoms recupNoms;
     private JLabel labCurrentJoueur;
     private int scoreJ1 = 0, scoreJ2 = 0;
-    protected static final String CHEMIN_IMAGE = "C:\\Users\\Dell\\IdeaProjects\\Apprendre\\src\\Evenementielle\\AJS\\Puissance4\\Image\\feu-d-artifice-";
 }
