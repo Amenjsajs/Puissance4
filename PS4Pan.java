@@ -4,9 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PS4Pan extends JPanel {
-    PS4Pan(int nbLigne, int nbColonne) {
+    PS4Pan(int nbLigne, int nbColonne, RecupNoms recupNoms) {
         this.nbLigne = nbLigne;
         this.nbColonne = nbColonne;
+        this.recupNoms = recupNoms;
         resetPS4();
     }
 
@@ -65,7 +66,7 @@ public class PS4Pan extends JPanel {
      * @return true si il ya une victoire de l'un des joueurs sinon false
      */
 
-    public boolean verification() {
+    public boolean isVictoire() {
         int v = 0;
         int indexCouleur = curBouleCouleurIndex == 0 ? 1 : 0;
 
@@ -195,8 +196,48 @@ public class PS4Pan extends JPanel {
             nbBouleJouer++; //On augmente de 1 le nombre de boules jouées
             curBouleCouleurIndex = curBouleCouleurIndex == 0 ? 1 : 0; //On change l'indice de la boule
             // Si l'indice était 0 alors il devient 1 et vice versa
+
+            recupNoms.curNomJ = recupNoms.curNomJ.equals(recupNoms.nomJ1) ? recupNoms.nomJ2 : recupNoms.nomJ1;
         }
         repaint();
+    }
+
+    /**
+     * La méthode undo permet d'annuler des mouvements les uns après les autres
+     * Comme si on faisait un Ctrl+Z
+     */
+
+    public void undo(){
+        //Si le nombre de boule jouées est 1 rien ne se passe
+        if(nbBouleJouer == 1) return;
+
+        //Sinon
+        nbBouleJouer--; //On décrémente le nombre de boules jouées de 1
+        colonePlein = false; //Indique que la colonne n'est pas pleine
+
+        /**
+         * Les abscisse étant l'indice des colonne * 50
+         * Pour trouver l'indice de la avant-dernière colonne
+         * On prend l'abscisse de l'avant-dernière boule / 50
+         * L'avant-dernière coolone devient la colonne courante
+         */
+        curColonne = posX[nbBouleJouer -1] / 50;
+        curBoulePosX = curColonne * 50;
+        curLigne[curColonne]--; //On décrémente de 1 le nombre de boules dans la colonne courante
+
+        /**
+         * On remet à l'état initial
+         * -le tableau qui stock la position de l'indice de la couleur de la boule qui avait été jouée (1)
+         * -le tableau qui stock l'abscisse la boule qui avait été jouée (2)
+         * -le tableau qui stock l'ordonnée la boule qui avait été jouée (3)
+         */
+        lignesColonnes[curLigne[curColonne]][curColonne] = -1; // (1)
+        posX[nbBouleJouer - 1] = 0; //(2)
+        posY[nbBouleJouer - 1] = 0; //(3)
+
+        curBouleCouleurIndex = curBouleCouleurIndex == 0 ? 1 : 0; //On change l'indice de la boule courante
+        //On change le nom du joueur courant
+        recupNoms.curNomJ = recupNoms.curNomJ.equals(recupNoms.nomJ1) ? recupNoms.nomJ2 : recupNoms.nomJ1;
     }
 
     public int getCurBouleCouleurIndex() {
@@ -213,6 +254,10 @@ public class PS4Pan extends JPanel {
 
     public boolean isMacthNull() {
         return matchNull;
+    }
+
+    public boolean isFocusTraversable(){
+        return true;
     }
 
     /**
@@ -240,6 +285,7 @@ public class PS4Pan extends JPanel {
 
         matchNull = false;
         colonePlein = false;
+        repaint();
     }
 
     private int w = 50; //La largeur des boules
@@ -250,12 +296,12 @@ public class PS4Pan extends JPanel {
     static private int[][] lignesColonnes; //Stoque les positions de chaque index couleur;
     // Utile pour vérifier s'il ya victoire
 
-    static private int[] curLigne; //Stoque le nombre de boules dans une colonne
+    static private int[] curLigne; //Stock le nombre de boules dans une colonne
     private int curColonne; //La colonne de la boule courante
 
     private int curBoulePosX = 0; //L'abscisse de la boule qui doit être jour
 
-    private int[] posX, posY; //Stoquent les positions de chaque boule; Utile pour redessiner le panneau
+    private int[] posX, posY; //Stock les positions de chaque boule; Utile pour redessiner le panneau
 
     static private int nbBouleJouer = 1; //Nombre de boules jouées.Par défaut le car le jeu commence
     // avec une boule prete à etre jouée
@@ -265,4 +311,6 @@ public class PS4Pan extends JPanel {
 
     private int curBouleCouleurIndex = 0; //L'indice de la couleur dans le tableau couleurs de la boule courante
     static private Color[] couleurs = {Color.yellow, Color.blue};
+
+    private RecupNoms recupNoms;
 }
