@@ -7,6 +7,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Objects;
 
+import static Evenementielle.AJS.Puissance4.Utils.Utils.getAppIcon;
+
 public class PS4Fen extends JFrame{
     PS4Fen(String titre, boolean visible){
         setTitle(titre);
@@ -16,7 +18,7 @@ public class PS4Fen extends JFrame{
 
         recupNoms = new RecupNoms();
 
-        nomsJoueurs = new PS4DialogSaisirNomJoueur(this,"Saisir les noms des joueurs",recupNoms,true);
+        setNomsJoueurs(this,Libelles.LIB_DIALOG_NOM_JOUEUR,recupNoms,true);
 
         Container cont = getContentPane();
         FlowLayout fl = new FlowLayout();
@@ -32,7 +34,7 @@ public class PS4Fen extends JFrame{
 
         //Définition de la grille
         nbLigne = 7; nbColonne = 7;
-        pan = new PS4Pan(nbLigne,nbColonne);
+        pan = new PS4Pan(nbLigne,nbColonne,recupNoms);
         pan.setPreferredSize(new Dimension(350,400));
         plateau.add(pan);
 
@@ -47,7 +49,7 @@ public class PS4Fen extends JFrame{
         affTop.setPreferredSize(new Dimension(250,50));
         affTop.setLayout(new BorderLayout());
 
-        JLabel labTextCurJoueur = new JLabel("Joueur courant ");
+        JLabel labTextCurJoueur = new JLabel(Libelles.LIB_LAB_JOUEUR_COURANT);
         labTextCurJoueur.setHorizontalAlignment(SwingConstants.CENTER);
         affTop.add(labTextCurJoueur,"North");
 
@@ -62,7 +64,7 @@ public class PS4Fen extends JFrame{
         panScore.setLayout(new BorderLayout());
         panScore.setPreferredSize(new Dimension(250,50));
 
-        JLabel labTextScore = new JLabel("Score");
+        JLabel labTextScore = new JLabel(Libelles.LIB_LAB_SCORE);
         labTextScore.setHorizontalAlignment(SwingConstants.CENTER);
         panScore.add(labTextScore,"North");
         tableAffichage.add(panScore);
@@ -90,14 +92,42 @@ public class PS4Fen extends JFrame{
         panRightAff.add(affScoreJ2,"South");
         //Fin (2)
 
+        //Panneau où s'affiche les feux d'artifice (3)
         JPanel panFeuArtifice = new JPanel();
         panFeuArtifice.setBackground(Color.black);
-        panFeuArtifice.setPreferredSize(new Dimension(250,300));
+        panFeuArtifice.setPreferredSize(new Dimension(250,240));
         panFeuArtifice.setLayout(new FlowLayout());
         JLabel labFeuArtifice = new JLabel();
         panFeuArtifice.add(labFeuArtifice);
-        panFeuArtifice.setVisible(false);
         tableAffichage.add(panFeuArtifice);
+        //Fin (3)
+
+        //Panneau du bouton de réinitailisation du jeu (4)
+        JPanel panBtnReset = new JPanel();
+        panBtnReset.setPreferredSize(new Dimension(250,60));
+        JButton btnReset = new JButton(Libelles.LIB_BTN_RESET);
+        btnReset.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(JOptionPane.showConfirmDialog(FEN,Libelles.LIB_DIALOG_RESET) == 0){
+                    new PS4DialogSaisirNomJoueur(FEN,Libelles.LIB_DIALOG_NOM_JOUEUR,recupNoms,true);
+                    pan.resetPS4();
+                    scoreJ1 = 0;
+                    scoreJ2 = 0;
+                    labScoreJ1.setText(recupNoms.nomJ1.toUpperCase());
+                    affScoreJ1.setText("0");
+                    labScoreJ2.setText(recupNoms.nomJ2.toUpperCase());
+                    affScoreJ2.setText("0");
+                    labCurrentJoueur.setText(recupNoms.curNomJ.toUpperCase());
+                }
+                FEN.requestFocus();
+            }
+        });
+        panBtnReset.add(btnReset);
+        tableAffichage.add(panBtnReset);
+        // Fin (4)
+
+        setFocusable(true);
 
         addKeyListener(new KeyAdapter() {
             public void keyReleased(KeyEvent e) {
@@ -105,59 +135,75 @@ public class PS4Fen extends JFrame{
                 if(e.getKeyCode() == 39){
                     pan.moveCurrentBoule(false,false);
                 }
+                //Fin Flèche clavier gauche pour aller à gauche
+
                 //Flèche clavier droit pour aller à drooite
                 if(e.getKeyCode() == 37){
                     pan.moveCurrentBoule(true,false);
                 }
+                //Fin Flèche clavier droit pour aller à drooite
+
                 //Flèche clavier bas ou Espace pour jouer la boule
                 if(e.getKeyCode() == 40 || e.getKeyCode() == 32){
                     pan.moveCurrentBoule(false,true);
 
                     //S'il ya victoire
-                    if(pan.verification()){
-                        //On met à jour le score
+                    if(pan.isVictoire()){
+                        String tmpCurJoueur = recupNoms.curNomJ;
                         if(recupNoms.curNomJ.equals(recupNoms.nomJ1)){
-                            affScoreJ1.setText(""+ ++scoreJ1);
-                        }else{
+                            recupNoms.curNomJ = recupNoms.nomJ2;
                             affScoreJ2.setText(""+ ++scoreJ2);
+                        }else {
+                            recupNoms.curNomJ = recupNoms.nomJ1;
+                            affScoreJ1.setText(""+ ++scoreJ1);
                         }
 
+                        //Affichage des feux d'artifice
                         int indiceImg = Utils.getRandomIntInclusive(1,11);
                         ImageIcon iconFeuArtifice = Utils.getAppIcon("feu-d-artifice-"+indiceImg+".gif");
-                        System.out.println(iconFeuArtifice);
                         labFeuArtifice.setIcon(iconFeuArtifice);
-                        panFeuArtifice.setVisible(true);
+                        labFeuArtifice.setVisible(true);
 
                         //On affiche le message de victoire et on demande si le jeu continue
-                        int rep = JOptionPane.showConfirmDialog(e.getComponent(),"Victoire de "+recupNoms.curNomJ+"\nContinuer le jeu?");
+                        int rep = JOptionPane.showConfirmDialog(e.getComponent(),Libelles.LIB_DIALOG_VICTOIRE+recupNoms.curNomJ+Libelles.LIB_DIALOG_CONTINUER);
 
                         //Si oui
                         if(rep == 0){
                             //On réinitialise le jeu
                             pan.resetPS4();
-                            pan.repaint();
-                            panFeuArtifice.setVisible(false);
+                            labFeuArtifice.setVisible(false);
+                        }else {
+                            System.exit(0);
                         }
+                        recupNoms.curNomJ = tmpCurJoueur;
                     }
 
                     //Si la colonne courante n'est pas pleine
                     if(!pan.isColonePlein()){
                         //On met à jour le nom du joueur courant
-                        recupNoms.curNomJ = recupNoms.curNomJ.equals(recupNoms.nomJ1) ? recupNoms.nomJ2 : recupNoms.nomJ1;
                         labCurrentJoueur.setText(recupNoms.curNomJ.toUpperCase());
                     }
 
                     //S'il y a match null
                     if(pan.isMacthNull()){
                         //On affiche le message de match nul et on demande si le jeu continue
-                        int rep = JOptionPane.showConfirmDialog(e.getComponent(),"Match nul \nContinuez le jeu?");
+                        int rep = JOptionPane.showConfirmDialog(e.getComponent(),Libelles.LIB_DIALOG_MATCH_NULL+Libelles.LIB_DIALOG_CONTINUER);
                         //Si oui
                         if(rep == 0){
                             //On réinitialise le jeu
                             pan.resetPS4();
-                            pan.repaint();
+                        }else {
+                            System.exit(0);
                         }
                     }
+                }
+                //Fin Flèche clavier bas ou Espace pour jouer la boule
+
+                //Flèche clavier haut pour annuler un mouvement
+                if(e.getKeyCode() == 38){
+                    pan.undo();
+                    pan.repaint();
+                    labCurrentJoueur.setText(recupNoms.curNomJ.toUpperCase());
                 }
             }
         });
@@ -173,6 +219,10 @@ public class PS4Fen extends JFrame{
         }
     }
 
+    public PS4DialogSaisirNomJoueur setNomsJoueurs(JFrame fen, String msg, RecupNoms recupNoms, boolean modal){
+        return new PS4DialogSaisirNomJoueur(fen, msg, recupNoms, modal);
+    }
+
     private PS4Pan pan;
     private int nbLigne, nbColonne;
     private JPanel plateau, tableAffichage;
@@ -180,4 +230,5 @@ public class PS4Fen extends JFrame{
     private RecupNoms recupNoms;
     private JLabel labCurrentJoueur;
     private int scoreJ1 = 0, scoreJ2 = 0;
+    private final PS4Fen FEN = this;
 }
