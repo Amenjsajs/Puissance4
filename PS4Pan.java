@@ -256,10 +256,6 @@ public class PS4Pan extends JPanel {
         return matchNull;
     }
 
-    public boolean isFocusTraversable(){
-        return true;
-    }
-
     /**
      * permet de réinitailiser le jeu;
      */
